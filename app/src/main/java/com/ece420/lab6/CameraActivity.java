@@ -1,6 +1,11 @@
 package com.ece420.lab6;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PointF;
 import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.graphics.Bitmap;
@@ -11,9 +16,13 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 // import android.util.Log;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -21,7 +30,6 @@ import java.lang.Math;
 import java.util.Collections;
 import java.util.Arrays;
 // import java.util.List;
-
 
 public class CameraActivity extends AppCompatActivity implements SurfaceHolder.Callback{
 
@@ -40,6 +48,19 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
     private double[][] kernelS = new double[][] {{-1,-1,-1},{-1,9,-1},{-1,-1,-1}};
     private double[][] kernelX = new double[][] {{1,0,-1},{1,0,-1},{1,0,-1}};
     private double[][] kernelY = new double[][] {{1,1,1},{0,0,0},{-1,-1,-1}};
+    byte[] rawdata;
+
+    private Button snap_button;
+    public static int snapFlag = 0;
+
+    private Paint paint;
+    private PointF startPoint, endPoint;
+    private boolean isDrawing;
+
+    public float touchX;
+    public float touchY;
+
+    public boolean pressed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +72,7 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 
         // Modify UI Text
         textHelper = (TextView) findViewById(R.id.Helper);
-        if(MainActivity.appFlag == 1) textHelper.setText("Histogram Equalized Image");
+        if(MainActivity.appFlag == 1) textHelper.setText("Taken Photo");
         else if(MainActivity.appFlag == 2) textHelper.setText("Sharpened Image");
         else if(MainActivity.appFlag == 3) textHelper.setText("Edge Detected Image");
 
@@ -61,13 +82,45 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
         surfaceHolder.addCallback(this);
         surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         surfaceView2 = (SurfaceView)findViewById(R.id.ViewHisteq);
+        surfaceView2.setOnTouchListener(new View.OnTouchListener(){
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                touchX = event.getX();
+                touchY = event.getY();
+                System.out.println(touchX);
+                System.out.println(touchY);
+                System.out.println("\n");
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    pressed = true;
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    pressed = false;
+                }
+                return true;
+            }
+        });
         surfaceHolder2 = surfaceView2.getHolder();
+
+
+
+        // Setup Button for Edge Detection
+        snap_button = (Button) findViewById(R.id.snap_button);
+        snap_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                snapFlag = ~snapFlag;
+
+            }
+        });
+
+        paint = new Paint();
+
     }
 
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         // Must have to override native method
+
         return;
     }
 
@@ -97,7 +150,10 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
                             // Lock canvas
                             Canvas canvas = surfaceHolder2.lockCanvas(null);
                             // Where Callback Happens, camera preview frame ready
+
                             onCameraFrame(canvas,data);
+                            drawingMethod(canvas);
+
                             // Unlock canvas
                             surfaceHolder2.unlockCanvasAndPost(canvas);
                         }
@@ -123,27 +179,65 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
         }
     }
 
+
+
+//    private void Draw(SurfaceHolder holder) {
+//        Canvas canvas = holder.lockCanvas();
+//        drawingMethod(canvas);
+//        holder.unlockCanvasAndPost(canvas);
+//    }
+
+    private void drawingMethod(Canvas canvas) {
+        byte tmp;
+        if (pressed == true) {
+            int y, x;
+            y = (int) (touchY);
+            x = (int) (touchX);
+            for (y = (int) touchY-5; y < (int) touchY+5; y++) {
+                for (x = (int) touchX-5; x < (int) touchX+5; x++) {
+                    if (x>=0 & x<height & y>=0 & y<width) {
+                        rawdata[(height-y) * width + (width-x)] = (byte) (rawdata[(height-y) * width + (width-x)] | 0x00FF);
+//
+                    }
+                }
+            }
+        }
+//            paint.setStyle(Paint.Style.FILL);
+//            paint.setColor(Color.RED);
+//            canvas.drawCircle(touchX, touchY, 20, paint);
+//            canvas.drawCircle(0, 0, 20, paint);
+//        }
+
+    }
+
+
+
     // Camera Preview Frame Callback Function
     protected void onCameraFrame(Canvas canvas, byte[] data) {
-
         Matrix matrix = new Matrix();
         matrix.postRotate(90);
         int retData[] = new int[width * height];
 
         // Apply different processing methods
-        if(MainActivity.appFlag == 1){
-            byte[] histeqData = histEq(data, width, height);
-            retData = yuv2rgb(histeqData);
-        }
-        else if (MainActivity.appFlag == 2){
+//        if(MainActivity.appFlag == 1){
+//            byte[] histeqData = histEq(data, width, height);
+//            retData = yuv2rgb(histeqData);
+//        }
+//        else if (MainActivity.appFlag == 2){
+//
+//            int[] sharpData = conv2(data, width, height, kernelS);
+//            retData = merge(sharpData, sharpData);
+//        }
+//        else if (MainActivity.appFlag == 3){
+//            int[] xData = conv2(data, width, height, kernelX);
+//            int[] yData = conv2(data, width, height, kernelY);
+//            retData = merge(xData, yData);
+//        }
 
-            int[] sharpData = conv2(data, width, height, kernelS);
-            retData = merge(sharpData, sharpData);
-        }
-        else if (MainActivity.appFlag == 3){
-            int[] xData = conv2(data, width, height, kernelX);
-            int[] yData = conv2(data, width, height, kernelY);
-            retData = merge(xData, yData);
+        if (snapFlag == 0){
+            rawdata = data.clone();
+        } else {
+            retData = yuv2rgb(rawdata);
         }
 
         // Create ARGB Image, rotate and draw

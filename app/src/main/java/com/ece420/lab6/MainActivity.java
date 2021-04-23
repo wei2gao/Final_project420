@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+//import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -21,6 +22,11 @@ public class MainActivity extends AppCompatActivity {
     private Button histeqButton;
     private Button sharpButton;
     private Button edgeButton;
+
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event){
+//
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, CameraActivity.class));
             }
         });
+
+
 
     }
 
