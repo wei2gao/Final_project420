@@ -17,7 +17,7 @@ public class GraphSegmenter {
     }
 
 
-    public byte[] segmentImage(byte[] image, int width, int height) {
+    public byte[] segmentImage(byte[] image, int width, int height, List<IntPair> bkgSeeds, List<IntPair> objSeeds) {
         byte[][] image2d = new byte[height][width];
         byte[] newImage = new byte[width*height];
         for (int i = 0; i < width; ++i) {
@@ -26,13 +26,17 @@ public class GraphSegmenter {
                 newImage[j*width + i] = image[j*width+ i];
             }
         }
-
+        System.out.println("Setting seeds");
+        graphConverter.setBkgSeeds(bkgSeeds);
+        graphConverter.setObjSeeds(objSeeds);
+        System.out.println("Converting to graph");
         Graph<IntPair, DefaultWeightedEdge> graph = graphConverter.convertImageToGraph(image2d);
 
 
         // TODO: use a custom implementation for extra brownie points
         // Note that in version 1.0.1, Boykov-Kolmogorov does not exist
         // Thus, we would have to implement it ourselves
+        System.out.println("Calculating minimum cut");
         PushRelabelMFImpl<IntPair, DefaultWeightedEdge> mincut = new PushRelabelMFImpl<>(graph);
         mincut.calculateMinCut(graphConverter.source, graphConverter.sink);
         Set<IntPair> objPartition, bkgPartition;

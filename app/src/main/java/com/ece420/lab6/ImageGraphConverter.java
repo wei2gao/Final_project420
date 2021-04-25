@@ -3,6 +3,7 @@ import org.jgrapht.*;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +26,7 @@ public class ImageGraphConverter {
     public ImageGraphConverter() {
         histogramObj = new int[256];
         histogramBkg = new int[256];
+        seeds = new HashMap<IntPair, Boolean>();
     }
 
     public void setBkgSeeds(List<IntPair> seedList) {
@@ -50,15 +52,21 @@ public class ImageGraphConverter {
     private void makeHistogram(byte[][] image) {
         int size = image.length * image[0].length;
         for (int i = 0; i < image.length; ++i) {
-            for (int j = 0; j < image[0].length; ++i) {
-                int dataVal = image[j][i] & 0x00FF;
-                IntPair p = new IntPair(i,j);
-                if (seeds.get(p) == bkgVal) {
-                    histogramBkg[dataVal]++;
-                    bkgSum++;
-                } else {
-                    histogramObj[dataVal]++;
-                    objSum++;
+            for (int j = 0; j < image[0].length; ++j) {
+                int dataVal = image[i][j] & 0x00FF;
+
+                //System.out.println(i + " " + j);
+                try {
+                    IntPair p = new IntPair(j,i);
+                    if (seeds.get(p) == bkgVal) {
+                        histogramBkg[dataVal]++;
+                        bkgSum++;
+                    } else {
+                        histogramObj[dataVal]++;
+                        objSum++;
+                    }
+                } catch (NullPointerException e) {
+                    // nothing
                 }
 
             }
@@ -75,11 +83,11 @@ public class ImageGraphConverter {
         int width, height;
         width = image[0].length;
         height = image.length;
-
+        System.out.println("Making histogram");
         makeHistogram(image);
 
         double weight_K = Integer.MIN_VALUE;
-
+        System.out.println("Making nodes");
         for (int i = 0; i < width; ++i) {
             for (int j = 0; j < height; ++j) {
                 IntPair p =  new IntPair(i,j);
@@ -111,23 +119,28 @@ public class ImageGraphConverter {
                 //DefaultWeightedEdge e1 = graph.addEdge(p, sink);
                 //DefaultWeightedEdge e2 = graph.addEdge(source, p);
                 double sinkWeight, sourceWeight;
-                if (seeds.get(p) == bkgVal) {
-                    sourceWeight = 0;
-                    sinkWeight = weight_K;
-                } else if (seeds.get(p) == objVal) {
-                    sourceWeight = weight_K;
-                    sinkWeight = 0;
-                } else {
-                    sourceWeight = cost_lambda * costRp(p, false);
-                    sinkWeight = cost_lambda * costRp(p, true);
+                try {
+                    if (seeds.get(p) == bkgVal) {
+                        sourceWeight = 0;
+                        sinkWeight = weight_K;
+                    } else if (seeds.get(p) == objVal) {
+                        sourceWeight = weight_K;
+                        sinkWeight = 0;
+                    } else {
+                        sourceWeight = cost_lambda * costRp(p, false);
+                        sinkWeight = cost_lambda * costRp(p, true);
+                    }
+                    Graphs.addEdge(graph, p, sink, sinkWeight); // TODO
+                    Graphs.addEdge(graph, source, p, sourceWeight); // TODO
+                } catch (NullPointerException e) {
+
                 }
-                Graphs.addEdge(graph, p, sink, sinkWeight); // TODO
-                Graphs.addEdge(graph, source, p, sourceWeight); // TODO
+
             }
         }
 
         // Once all the vertices are added. connect everything to its neighbors
-
+        System.out.println("Making edges");
         for (int i = 0; i < width; ++i) {
             for (int j = 0; j < height; ++j) {
                 IntPair p = new IntPair(i, j);

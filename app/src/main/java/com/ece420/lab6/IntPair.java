@@ -1,5 +1,7 @@
 package com.ece420.lab6;
 
+import java.util.Objects;
+
 public class IntPair {
     public int x,y;
 
@@ -17,5 +19,10 @@ public class IntPair {
         if (!(other instanceof IntPair)) return false;
         IntPair p = (IntPair) other;
         return (this.x == p.x) && (this.y == p.y);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 }

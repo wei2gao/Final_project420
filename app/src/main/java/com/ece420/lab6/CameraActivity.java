@@ -27,8 +27,10 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Arrays;
+import java.util.List;
 // import java.util.List;
 
 public class CameraActivity extends AppCompatActivity implements SurfaceHolder.Callback{
@@ -240,6 +242,9 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
             retData = yuv2rgb(rawdata);
         }
 
+        byte[] segmented = segment(rawdata, width, height);
+        retData = yuv2rgb(segmented);
+
         // Create ARGB Image, rotate and draw
         Bitmap bmp = Bitmap.createBitmap(retData, width, height, Bitmap.Config.ARGB_8888);
         bmp = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
@@ -394,6 +399,29 @@ public class CameraActivity extends AppCompatActivity implements SurfaceHolder.C
 
         // *********************** End YOUR CODE HERE  **************************** //
         return convData;
+    }
+
+    public byte[] segment(byte[] data, int width, int height) {
+        GraphSegmenter segmenter = new GraphSegmenter();
+        List<IntPair> bkgSeeds, objSeeds;
+        bkgSeeds = new ArrayList<IntPair>();
+        objSeeds = new ArrayList<IntPair>();
+        // Assume that the center is the object and the region on the sides are background
+
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                IntPair p = new IntPair(i,j);
+                if (i >= width/2 - 30 && i <= width/2 + 30 && j >= height/2 - 30 && j <= height/2 + 30) {
+                    objSeeds.add(p);
+                } else if (i < 10 || i > width-10 || j < 10 || j > height - 10) {
+                    bkgSeeds.add(p);
+                }
+            }
+        }
+
+        System.out.println(bkgSeeds);
+
+        return segmenter.segmentImage(data, width, height, bkgSeeds, objSeeds);
     }
 
 }
