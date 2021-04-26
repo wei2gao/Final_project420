@@ -73,8 +73,10 @@ public class ImageGraphConverter {
         }
     }
 
-    public Graph<IntPair, DefaultWeightedEdge> convertImageToGraph(byte[][] image) {
-        this.image = image;
+    public Graph<IntPair, DefaultWeightedEdge> convertImageToGraph(byte[][] image_in) {
+
+
+       this.image = image_in;
 
         Graph<IntPair, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<IntPair, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 
@@ -162,6 +164,7 @@ public class ImageGraphConverter {
                 }
             }
         }
+        System.out.println("Done making edges");
         return graph; // The graph should now be ready for segmentation using a minimum cut algorithm.
     }
 

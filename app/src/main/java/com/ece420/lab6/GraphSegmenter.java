@@ -5,12 +5,14 @@ import org.jgrapht.alg.flow.PushRelabelMFImpl;
 import org.jgrapht.alg.interfaces.MaximumFlowAlgorithm;
 import org.jgrapht.graph.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class GraphSegmenter {
 
     ImageGraphConverter graphConverter;
+    static final int downsampleFactor = 16;
 
     public GraphSegmenter() {
         graphConverter = new ImageGraphConverter();
@@ -26,12 +28,39 @@ public class GraphSegmenter {
                 newImage[j*width + i] = image[j*width+ i];
             }
         }
-        System.out.println("Setting seeds");
-        graphConverter.setBkgSeeds(bkgSeeds);
-        graphConverter.setObjSeeds(objSeeds);
-        System.out.println("Converting to graph");
-        Graph<IntPair, DefaultWeightedEdge> graph = graphConverter.convertImageToGraph(image2d);
 
+        // TODO: downsample the image by a factor of 4
+        byte[][] image_downsample = new byte[height/downsampleFactor][width/downsampleFactor];
+
+        for (int i = 0; i < width/downsampleFactor; i ++) {
+            for (int j = 0; j < height/downsampleFactor; j ++) {
+                image_downsample[j][i] = image[(j*downsampleFactor)*width + i*downsampleFactor];
+            }
+        }
+
+        List<IntPair> bkgSeeds_downsampled, objSeeds_downsampled;
+        bkgSeeds_downsampled = new ArrayList<IntPair>();
+        objSeeds_downsampled = new ArrayList<IntPair>();
+
+        // TODO: convert seeds to downsampled coordinates
+        for (IntPair seed : bkgSeeds) {
+            IntPair seed_downsampled = new IntPair(seed.x/downsampleFactor, seed.y/downsampleFactor);
+            if (!bkgSeeds_downsampled.contains(seed_downsampled))
+                bkgSeeds_downsampled.add(seed_downsampled);
+        }
+
+        for (IntPair seed : objSeeds) {
+            IntPair seed_downsampled = new IntPair(seed.x/downsampleFactor, seed.y/downsampleFactor);
+            if (!objSeeds_downsampled.contains(seed_downsampled))
+                objSeeds_downsampled.add(seed_downsampled);
+        }
+
+        System.out.println("Setting seeds");
+        graphConverter.setBkgSeeds(bkgSeeds_downsampled);
+        graphConverter.setObjSeeds(objSeeds_downsampled);
+        System.out.println("Converting to graph");
+        Graph<IntPair, DefaultWeightedEdge> graph = graphConverter.convertImageToGraph(image_downsample);
+        System.out.println("Conversion done");
 
         // TODO: use a custom implementation for extra brownie points
         // Note that in version 1.0.1, Boykov-Kolmogorov does not exist
@@ -42,9 +71,18 @@ public class GraphSegmenter {
         Set<IntPair> objPartition, bkgPartition;
        // objPartition = mincut.getSourcePartition();
         bkgPartition = mincut.getSinkPartition();
-
+        System.out.println("Cut computed");
         for (IntPair p : bkgPartition) {
-            newImage[p.y*width + p.x] = 0; // super hacky way to delete the background
+            if (p.x >= 0 && p.y >= 0) {
+                for (int i = 0; i < downsampleFactor; i++) {
+                    for (int j = 0; j < downsampleFactor; j++) {
+
+                        newImage[(p.y * downsampleFactor + j) * width + (p.x * downsampleFactor + i)] = 0; // super hacky way to delete the background
+                    }
+                }
+            }
+
+
         }
 
         return newImage;
