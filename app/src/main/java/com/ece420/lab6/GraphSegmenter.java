@@ -66,11 +66,13 @@ public class GraphSegmenter {
         // Note that in version 1.0.1, Boykov-Kolmogorov does not exist
         // Thus, we would have to implement it ourselves
         System.out.println("Calculating minimum cut");
-        PushRelabelMFImpl<IntPair, DefaultWeightedEdge> mincut = new PushRelabelMFImpl<>(graph);
-        mincut.calculateMinCut(graphConverter.source, graphConverter.sink);
+//        PushRelabelMFImpl<IntPair, DefaultWeightedEdge> mincut = new PushRelabelMFImpl<>(graph);
+//        mincut.calculateMinCut(graphConverter.source, graphConverter.sink);
+        BoykovKolmogorov bk = new BoykovKolmogorov(graph);
+        bk.calculate();
         Set<IntPair> objPartition, bkgPartition;
-       // objPartition = mincut.getSourcePartition();
-        bkgPartition = mincut.getSinkPartition();
+        objPartition = bk.sPartition;//mincut.getSourcePartition();
+        bkgPartition = bk.tPartition; //.getSinkPartition();
         System.out.println("Cut computed");
         for (IntPair p : bkgPartition) {
             if (p.x >= 0 && p.y >= 0) {
