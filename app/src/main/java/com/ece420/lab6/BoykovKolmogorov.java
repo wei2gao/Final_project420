@@ -85,7 +85,7 @@ public class BoykovKolmogorov {
     }
 
     private String tree(IntPair p) {
-        if (_tree.containsKey(p)) {
+        if (_tree.containsKey(p) && _tree.get(p) != null) {
             return _tree.get(p);
         } else {
             return "";
@@ -119,14 +119,14 @@ public class BoykovKolmogorov {
             List<IntPair> neighbors = Graphs.neighborListOf(residualGraph, p);
             for (IntPair q : neighbors) {
                 if (treeCapacity(p, q) > 0) {
-                    if (!_tree.containsKey(q) || _tree.getOrDefault(q, "").equals("")) {
+                    if (!_tree.containsKey(q) ||tree(q).equals("")) {
                         activeNodes.add(q);
-                        _tree.put(q, _tree.getOrDefault(p, ""));
+                        _tree.put(q, tree(p));
                         parents.put(q, p);
                     }
                     else
                     {
-                        if (!_tree.getOrDefault(p, "").equals(_tree.get(q))) {
+                        if (!tree(p).equals(tree(q))) {
                             IntPair node_before, node_after;
                             // TODO: reconstruct the path and return it
 
@@ -150,6 +150,7 @@ public class BoykovKolmogorov {
                             }
 
                             parentQ = parents.getOrDefault(node_after, null);
+                            // FIXME: (18, 29) and (19, 28) or something form a loop
                             while (parentQ != null) {
                                 path.add(parentQ);
                                 if (parentQ.equals(ImageGraphConverter.sink)) break;
