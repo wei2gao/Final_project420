@@ -86,15 +86,7 @@ public class GraphSegmenter {
 
 
         }
-        // newImage only contains luminance data. We need to copy over the chroma part unchanged
-        byte[] actualImage = new byte[image.length];
-        for (int i = 0; i < width*height; i++) {
-            actualImage[i] = newImage[i];
-        }
-        for (int i = width*height; i < image.length; ++i) {
-            actualImage[i] = image[i];
-        }
 
-        return actualImage;
+        return newImage;
     }
 }

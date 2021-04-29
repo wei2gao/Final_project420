@@ -14,8 +14,7 @@ public class ImageGraphConverter {
     Map<IntPair, Boolean> seeds;
     private byte[][] image;
     private int[] histogramBkg, histogramObj;
-    public static final IntPair source = new IntPair(-1, -1);
-    public static final IntPair sink = new IntPair(-2 , -2);
+    public IntPair source, sink;
     int objSum, bkgSum;
 
     private static final boolean bkgVal = false;
@@ -111,8 +110,8 @@ public class ImageGraphConverter {
         }
 
 
-//        source = new IntPair(-1, -1);
-//        sink = new IntPair(-2, -2);
+        source = new IntPair(-1, -1);
+        sink = new IntPair(-2, -2);
         graph.addVertex(source);
         graph.addVertex(sink);
         for (int i = 0; i < width; ++i) {
