@@ -108,7 +108,11 @@ public class BoykovKolmogorov {
                 if (treeCapacity(p, q) > 0) {
                     if (tree(p).equals("")) {
                         activeNodes.add(q);
-                        _tree.put(q, _tree.getOrDefault(p, ""));
+                        if (_tree.getOrDefault(p, "") == null) {
+                            _tree.put(q, "");
+                        } else {
+                            _tree.put(q, _tree.getOrDefault(p, ""));
+                        }
                         parents.put(q, p);
                     }
                     else
